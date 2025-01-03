@@ -1,9 +1,20 @@
-const meta = document.createElement('meta');
-meta.httpEquiv = 'Content-Security-Policy';
-meta.content = 'upgrade-insecure-requests';
-document.getElementsByTagName('head')[0].appendChild(meta);
-
 const captcha = document.querySelector('#captcha');
+const answer = document.querySelector('#answer');
+const captchaId = 'supreme_court';
+
+if (captcha) {
+  console.log('captcha found:', document.location.href);
+  const captchaImage = captcha.querySelector('img');
+  predictCaptcha(captchaId, captchaImage, answer);
+  const observer = new MutationObserver(() => {
+    console.log('Captcha HTML changed:', document.location.href);
+    const captchaImage = captcha.querySelector('img');
+    captchaImage.onload = () => { predictCaptcha(captchaId, captchaImage, answer); };
+  });
+  observer.observe(captcha, { childList: true, subtree: false });
+} else {
+  console.log('No captcha image found');
+}
 
 function img2DataUrl(img) {
   const canvas = document.createElement('canvas');
@@ -14,61 +25,47 @@ function img2DataUrl(img) {
   return canvas.toDataURL('image/png');
 }
 
-if (captcha) {
-  console.log('captcha found:', document.location.href);
-  const captchaImage = captcha.querySelector('img');
+function predictCaptcha(captchaId ,captchaImage, answer) {
+  captchaImage.value = '';
+  captchaImage.style.backgroundColor = 'white';
+  const url = (document.location.protocol === 'https:') ? 'https://dev.hyperinfo.co.kr/captcha/api/predict' : 'http://dev.hyperinfo.co.kr:12004/api/predict';
+  const dataUrl = img2DataUrl(captchaImage);
+  const formData = new FormData();
+  formData.append('captcha_id', captchaId);
+  formData.append('captcha_data_url', dataUrl);
+
+  const formDataEntries = Array.from(formData.entries());
+  const urlEncodedData = formDataEntries.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&');
+  const contentLength = urlEncodedData.length.toString();
   
-  if (captchaImage) {
-    const dataUrl = img2DataUrl(captchaImage);
-    const formData = new FormData();
-    formData.append('captcha_id', 'supreme_court');
-    formData.append('captcha_data_url', dataUrl);
-
-    url = 'http://dev.hyperinfo.co.kr:12004/api/predict';
-
-    if (document.location.protocol === 'https:') {
-      url = 'https://dev.hyperinfo.co.kr/captcha/api/predict';
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Host': 'dev.hyperinfo.co.kr',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': contentLength
+    },
+    body: urlEncodedData,
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Prediction result:', data);
+    const pred = data.pred;
+    if (answer) {
+      answer.focus();
+      answer.value = pred;
+      answer.style.backgroundColor = 'lightgreen';
+      // const event = new KeyboardEvent('keypress', {
+      //   bubbles: true,
+      //   cancelable: true,
+      //   key: 'Enter',
+      //   code: 'Enter',
+      //   keyCode: 13
+      // });
+      // answer.dispatchEvent(event);
     }
-
-    // Convert FormData to URL-encoded string
-    const formDataEntries = Array.from(formData.entries());
-    const urlEncodedData = formDataEntries.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&');
-    const contentLength = urlEncodedData.length.toString();
-
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Host': 'dev.hyperinfo.co.kr',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': contentLength
-      },
-      body: urlEncodedData,
-      // mode: 'no-cors'
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Prediction result:', data);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-    });
-  } else {
-    console.log('No captcha image found');
-  }
-} else {
-  console.log('No captcha found');
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
 }
-// const imageIds = ['test2', 'test4'];
-
-// const loadButton = document.createElement('button');
-// loadButton.innerText = 'Load images';
-// loadButton.addEventListener('click', handleLoadRequest);
-
-// document.querySelector('body').append(loadButton);
-
-// function handleLoadRequest() {
-//   for (const id of imageIds) {
-//     const element = document.getElementById(id);
-//     element.src = chrome.runtime.getURL(`${id}.png`);
-//   }
-// }

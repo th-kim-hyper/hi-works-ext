@@ -1,19 +1,7 @@
-const captcha = document.querySelector('#captcha');
-const answer = document.querySelector('#answer');
-const captchaId = 'supreme_court';
-
-if (captcha) {
-  console.log('captcha found:', document.location.href);
-  const captchaImage = captcha.querySelector('img');
-  predictCaptcha(captchaId, captchaImage, answer);
-  const observer = new MutationObserver(() => {
-    console.log('Captcha HTML changed:', document.location.href);
-    const captchaImage = captcha.querySelector('img');
-    captchaImage.onload = () => { predictCaptcha(captchaId, captchaImage, answer); };
-  });
-  observer.observe(captcha, { childList: true, subtree: false });
-} else {
-  console.log('No captcha image found');
+const config = {
+  captchaId: "supreme_court",
+  captchaImageSelector: "#captcha > img",
+  captchaAnswerSelector: "#answer"
 }
 
 function img2DataUrl(img) {
@@ -68,4 +56,23 @@ function predictCaptcha(captchaId ,captchaImage, answer) {
   .catch(error => {
     console.error('Error:', error);
   });
+}
+
+const captchaImage = document.querySelector(config.captchaImageSelector);
+if (captchaImage) {
+  console.log(`captcha found: ${document.location.href}`);
+  const captchaId = config.captchaId;
+  const answer = document.querySelector(config.captchaAnswerSelector);
+  const captchaParent = captchaImage.parentElement;
+
+  predictCaptcha(captchaId, captchaImage, answer);
+  
+  const observer = new MutationObserver(() => {
+    console.log(`Captcha HTML changed: ${document.location.href}`);
+    const reloadedCkaptchaImage = document.querySelector(config.captchaImageSelector);
+    reloadedCkaptchaImage.onload = () => { predictCaptcha(captchaId, reloadedCkaptchaImage, answer); };
+  }); 
+  observer.observe(captchaParent, { childList: true, subtree: false });
+} else {
+  console.log('No captcha image found');
 }

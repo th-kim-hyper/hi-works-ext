@@ -1,11 +1,12 @@
 {
-  "name": "hi-works-ext",
-  "description": "Hi works captcha Extension",
-  "version": "1.0",
   "manifest_version": 3,
+  "name": "Hyper Captcha",
+  "description": "하이퍼 캡챠 크롬 확장",
+  "version": "1.0",
   "action": {
-    "default_popup": "index.html",
-    "default_icon": "hiworks.png"
+    "default_popup": "popup.html",
+    "default_icon": "hiworks.png",
+    "default_title": "Hyper Captcha"
   },
   "host_permissions": [
     "http://dev.hyperinfo.co.kr:12004/*",

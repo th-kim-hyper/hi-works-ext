@@ -1,3 +1,4 @@
+
 const config = {
   captchaId: "supreme_court",
   captchaImageSelector: "#captcha > img",
@@ -11,6 +12,22 @@ function img2DataUrl(img) {
   canvas.height = img.height;
   ctx.drawImage(img, 0, 0);
   return canvas.toDataURL('image/png');
+}
+
+function createElementFromHTML(htmlString) {
+  const template = document.createElement('template');
+  template.innerHTML = htmlString.trim();
+
+  // 스크립트 태그 제거
+  const scripts = template.content.querySelectorAll('script');
+  scripts.forEach(script => script.remove());
+
+  // 여러 개의 루트 요소를 처리
+  if (template.content.childNodes.length > 1) {
+    return template.content.childNodes;
+  } else {
+    return template.content.firstChild;
+  }
 }
 
 function predictCaptcha(captchaId ,captchaImage, answer) {
@@ -60,6 +77,7 @@ function predictCaptcha(captchaId ,captchaImage, answer) {
 
 const captchaImage = document.querySelector(config.captchaImageSelector);
 if (captchaImage) {
+  chrome.runtime.sendMessage('content_script_loaded');
   console.log(`captcha found: ${document.location.href}`);
   const captchaId = config.captchaId;
   const answer = document.querySelector(config.captchaAnswerSelector);

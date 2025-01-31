@@ -6,6 +6,7 @@ function init() {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Message:', message);
     if (message === 'content_script_loaded') {
+      chrome.action.enable(sender.tab.id);
       setAction(sender.tab.id, true);
     }
   });
@@ -16,30 +17,25 @@ function init() {
 
       if (tab.url.startsWith('http://') || tab.url.startsWith('https://')) {
         console.log('Valid URL:', tab.url);
-
-        // 특정 탭에서 스크립트 실행
-        chrome.scripting.executeScript({
-          target: { tabId: tabId },
-          func: () => {
-            console.log('Script executed in tab:', document.location.href);
-            // 여기에 실행할 스크립트를 작성하세요.
-          }
-        }, (results) => {
-          if (chrome.runtime.lastError) {
-            console.error('Script execution failed:', chrome.runtime.lastError);
-          } else {
-            console.log('Script execution results:', results);
-          }
-        });
-
+        // // 특정 탭에서 스크립트 실행
+        // chrome.scripting.executeScript({
+        //   target: { tabId: tabId },
+        //   function: () => {
+        //     console.log('Script executed in tab:', document.location.href);
+        //     // 여기에 실행할 스크립트를 작성하세요.
+        //   }
+        // }, (results) => {
+        //   if (chrome.runtime.lastError) {
+        //     console.error('Script execution failed:', chrome.runtime.lastError);
+        //   } else {
+        //     console.log('Script execution results:', results);
+        //   }
+        // });
       } else {
         console.log('Invalid URL:', tab.url);
-        return;
       }
-
     }
   });
-
   
 }
 

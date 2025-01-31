@@ -1,9 +1,12 @@
+
 console.log('content-script.js loaded');
 
 const config = {
   captchaId: "supreme_court",
-  captchaImageSelector: "#captcha > img",
-  captchaAnswerSelector: "#answer"
+  // captchaImageSelector: "#captcha > img",
+  // captchaAnswerSelector: "#answer"
+  captchaImageSelector: "img.w2image.mr10.pb5",
+  captchaAnswerSelector: "input.w2input.inp.w200px.mr10",
 }
 
 function img2DataUrl(img) {
@@ -13,6 +16,18 @@ function img2DataUrl(img) {
   canvas.height = img.height;
   ctx.drawImage(img, 0, 0);
   return canvas.toDataURL('image/png');
+}
+
+function dataUrlToBlob(dataUrl) {
+  const parts = dataUrl.split(',');
+  const byteString = atob(parts[1]);
+  const mimeString = parts[0].split(':')[1].split(';')[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
 }
 
 function createElementFromHTML(htmlString) {
@@ -31,7 +46,7 @@ function createElementFromHTML(htmlString) {
   }
 }
 
-function predictCaptcha(captchaId ,captchaImage, answer) {
+function predictCaptcha(captchaId, captchaImage, answer) {
   captchaImage.value = '';
   captchaImage.style.backgroundColor = 'white';
   const url = (document.location.protocol === 'https:') ? 'https://dev.hyperinfo.co.kr/captcha/api/predict' : 'http://dev.hyperinfo.co.kr:12004/api/predict';
@@ -43,6 +58,7 @@ function predictCaptcha(captchaId ,captchaImage, answer) {
   const formDataEntries = Array.from(formData.entries());
   const urlEncodedData = formDataEntries.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&');
   const contentLength = urlEncodedData.length.toString();
+  const copyIconId = 'copy-icon';
   
   fetch(url, {
     method: 'POST',
@@ -61,14 +77,11 @@ function predictCaptcha(captchaId ,captchaImage, answer) {
       answer.focus();
       answer.value = pred;
       answer.style.backgroundColor = 'lightgreen';
-      // const event = new KeyboardEvent('keypress', {
-      //   bubbles: true,
-      //   cancelable: true,
-      //   key: 'Enter',
-      //   code: 'Enter',
-      //   keyCode: 13
-      // });
-      // answer.dispatchEvent(event);
+      
+      const icon = document.createElement('i');
+      icon.id = copyIconId;
+      icon.className = 'bi bi-clipboard';
+      answer.parentElement.appendChild(icon);
     }
   })
   .catch(error => {
@@ -76,26 +89,101 @@ function predictCaptcha(captchaId ,captchaImage, answer) {
   });
 }
 
+function waitForElm(selector) {
+  return new Promise(resolve => {
+      if (document.querySelector(selector)) {
+          return resolve(document.querySelector(selector));
+      }
+
+      const observer = new MutationObserver(mutations => {
+          if (document.querySelector(selector)) {
+              observer.disconnect();
+              resolve(document.querySelector(selector));
+          }
+      });
+
+      // If you get "parameter 1 is not of type 'Node'" error, see https://stackoverflow.com/a/77855838/492336
+      observer.observe(document.body, {
+          childList: true,
+          subtree: true
+      });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Document is ready');
+
+
+
+
+  // const targetNode = document.body;
+  // const config = { childList: true, subtree: true };
+  
+  // const callback = function(mutationsList, observer) {
+  //   for (const mutation of mutationsList) {
+  //     if (mutation.type === 'childList') {
+  //       mutation.addedNodes.forEach(node => {
+
+  //         console.log('Added node:', node);
+  //       });
+  
+  //       const newElement = mutation.addedNodes[0];
+  //       if (newElement && newElement.matches && newElement.matches('img.w2image')) {
+  //         console.log('New img.w2image element added:', newElement);
+  //         const img = document.querySelector("img.w2image");
+  //         // img.addEventListener('load', () => {
+  //           console.log(`Image has been loaded : ${img}`);
+  //         // });
+  //       }
+  //     }
+  //   }
+  // };
+  
+  // const observer = new MutationObserver(callback);
+  // observer.observe(targetNode, config);
+
+
+  // console.log(`document: ${document.querySelector("img.w2image")}`);  
+});
+
 window.addEventListener('load', () => {
   console.log('window load event fired');
   chrome.runtime.sendMessage('content_script_loaded');
-  const captchaImage = document.querySelector(config.captchaImageSelector);
-  
-  if (captchaImage) {
+
+  waitForElm(config.captchaImageSelector).then((captchaImage) => {
     console.log(`captcha found: ${document.location.href}`);
     const captchaId = config.captchaId;
     const answer = document.querySelector(config.captchaAnswerSelector);
     const captchaParent = captchaImage.parentElement;
-    predictCaptcha(captchaId, captchaImage, answer);
+    setTimeout(() => { predictCaptcha(captchaId, captchaImage, answer); }, 1500);
+    // predictCaptcha(captchaId, captchaImage, answer);
     
     const observer = new MutationObserver(() => {
       console.log(`Captcha HTML changed: ${document.location.href}`);
       const reloadedCkaptchaImage = document.querySelector(config.captchaImageSelector);
       reloadedCkaptchaImage.onload = () => { predictCaptcha(captchaId, reloadedCkaptchaImage, answer); };
-    }); 
+    });
     observer.observe(captchaParent, { childList: true, subtree: false });
-  } else {
-    console.log('No captcha image found');
-  }
+  })
+  .catch(error => { console.error('Error:', error); });
+
+  // const captchaImage = document.querySelector(config.captchaImageSelector);
+  
+  // if (captchaImage) {
+  //   console.log(`captcha found: ${document.location.href}`);
+  //   const captchaId = config.captchaId;
+  //   const answer = document.querySelector(config.captchaAnswerSelector);
+  //   const captchaParent = captchaImage.parentElement;
+  //   predictCaptcha(captchaId, captchaImage, answer);
+    
+  //   const observer = new MutationObserver(() => {
+  //     console.log(`Captcha HTML changed: ${document.location.href}`);
+  //     const reloadedCkaptchaImage = document.querySelector(config.captchaImageSelector);
+  //     reloadedCkaptchaImage.onload = () => { predictCaptcha(captchaId, reloadedCkaptchaImage, answer); };
+  //   }); 
+  //   observer.observe(captchaParent, { childList: true, subtree: false });
+  // } else {
+  //   console.log('No captcha image found');
+  // }
 
 });

@@ -41,10 +41,11 @@
   "content_scripts": [
     {
       "matches": [
-        "https://safind.scourt.go.kr/sf/mysafind.jsp*"
+        "https://ssgo.scourt.go.kr/ssgo/index.on?cortId=www"
       ],
       "all_frames": true,
       "js": ["content-script.js"]
+      , "run_at": "document_start"
     }
   ]
 }

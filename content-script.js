@@ -112,38 +112,6 @@ function waitForElm(selector) {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Document is ready');
-
-
-
-
-  // const targetNode = document.body;
-  // const config = { childList: true, subtree: true };
-  
-  // const callback = function(mutationsList, observer) {
-  //   for (const mutation of mutationsList) {
-  //     if (mutation.type === 'childList') {
-  //       mutation.addedNodes.forEach(node => {
-
-  //         console.log('Added node:', node);
-  //       });
-  
-  //       const newElement = mutation.addedNodes[0];
-  //       if (newElement && newElement.matches && newElement.matches('img.w2image')) {
-  //         console.log('New img.w2image element added:', newElement);
-  //         const img = document.querySelector("img.w2image");
-  //         // img.addEventListener('load', () => {
-  //           console.log(`Image has been loaded : ${img}`);
-  //         // });
-  //       }
-  //     }
-  //   }
-  // };
-  
-  // const observer = new MutationObserver(callback);
-  // observer.observe(targetNode, config);
-
-
-  // console.log(`document: ${document.querySelector("img.w2image")}`);  
 });
 
 window.addEventListener('load', () => {
@@ -155,8 +123,7 @@ window.addEventListener('load', () => {
     const captchaId = config.captchaId;
     const answer = document.querySelector(config.captchaAnswerSelector);
     const captchaParent = captchaImage.parentElement;
-    setTimeout(() => { predictCaptcha(captchaId, captchaImage, answer); }, 1500);
-    // predictCaptcha(captchaId, captchaImage, answer);
+    setTimeout(() => { predictCaptcha(captchaId, captchaImage, answer); }, 500);
     
     const observer = new MutationObserver(() => {
       console.log(`Captcha HTML changed: ${document.location.href}`);
@@ -166,24 +133,5 @@ window.addEventListener('load', () => {
     observer.observe(captchaParent, { childList: true, subtree: false });
   })
   .catch(error => { console.error('Error:', error); });
-
-  // const captchaImage = document.querySelector(config.captchaImageSelector);
-  
-  // if (captchaImage) {
-  //   console.log(`captcha found: ${document.location.href}`);
-  //   const captchaId = config.captchaId;
-  //   const answer = document.querySelector(config.captchaAnswerSelector);
-  //   const captchaParent = captchaImage.parentElement;
-  //   predictCaptcha(captchaId, captchaImage, answer);
-    
-  //   const observer = new MutationObserver(() => {
-  //     console.log(`Captcha HTML changed: ${document.location.href}`);
-  //     const reloadedCkaptchaImage = document.querySelector(config.captchaImageSelector);
-  //     reloadedCkaptchaImage.onload = () => { predictCaptcha(captchaId, reloadedCkaptchaImage, answer); };
-  //   }); 
-  //   observer.observe(captchaParent, { childList: true, subtree: false });
-  // } else {
-  //   console.log('No captcha image found');
-  // }
 
 });
